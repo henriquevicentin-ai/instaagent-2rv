@@ -4337,6 +4337,7 @@ async function initSupabaseData() {
       if (typeof renderProfiles === 'function') renderProfiles();
       if (typeof window.renderFeeds === 'function') window.renderFeeds();
       if (typeof showTab === 'function') showTab(window.currentTab || 'dashboard');
+      if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
       
   } catch(err) {
       console.error("Supabase Error:", err);
@@ -4365,6 +4366,7 @@ window.saveProfiles = async function() {
         try {
             await window.supabaseClient.from('profiles').upsert(toUpdate, { onConflict: 'handle' });
             console.log("Supabase UPSERT SUCCESS");
+        if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
         } catch(e) { console.error("UPSERT Error:", e); }
     }
 };
@@ -4373,6 +4375,19 @@ window.saveProfiles = async function() {
 document.addEventListener('DOMContentLoaded', initSupabaseData);
 
 
+
+
+function updateSidebarBadges() {
+    if (!window.profiles) return;
+    const arqCount = window.profiles.filter(p => p.type === 'arq').length;
+    const supCount = window.profiles.filter(p => p.type === 'sup').length;
+    
+    const badgeArq = document.getElementById('badge-arq');
+    const badgeSup = document.getElementById('badge-sup');
+    
+    if (badgeArq) badgeArq.textContent = arqCount;
+    if (badgeSup) badgeSup.textContent = supCount;
+}
 
 // --- APIFY SYNC LOGIC ---
 function updateApifyStatus() {
