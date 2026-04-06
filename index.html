@@ -3737,14 +3737,8 @@ function openEditProfile(handle) {
   document.getElementById('edit-avatar-preview').style.borderColor = p.type === 'arq' ? 'rgba(10,158,127,0.3)' : 'rgba(217,90,43,0.3)';
   document.getElementById('edit-subtitle').textContent = p.handle + ' · ' + (p.type === 'arq' ? 'Arquiteto(a)' : 'Fornecedor');
   document.getElementById('edit-profile-followers').value = p.followers || '';
-  const sellerRow = document.getElementById('edit-group-seller');
-  if (p.type === 'arq') {
-    sellerRow.style.display = 'block';
-    document.getElementById('edit-profile-seller').value = p.seller || '';
-  } else {
-    sellerRow.style.display = 'none';
-    document.getElementById('edit-profile-seller').value = '';
-  }
+  document.getElementById('edit-profile-type').value = p.type || 'arq';
+  document.getElementById('edit-profile-seller').value = p.seller || '';
   document.getElementById('modal-edit-profile').style.display = 'flex';
 }
 
@@ -3756,11 +3750,25 @@ function saveEditProfile() {
   const newHandle = document.getElementById('edit-profile-handle').value.trim();
   const newAvatar = document.getElementById('edit-profile-avatar').value.trim().toUpperCase() || newName.substring(0,2).toUpperCase();
   const newSeller = document.getElementById('edit-profile-seller').value.trim();
+  const newType = document.getElementById('edit-profile-type').value;
   if (!newName || !newHandle) { showToast('sup', '⚠️', 'Erro', 'Nome e Arroba são obrigatórios.'); return; }
+  
+  // Sync custom suppliers local list if type changes
+  const extraSups = JSON.parse(localStorage.getItem('instaagent_custom_sups') || '[]');
+  const handleWithAt = newHandle.startsWith('@') ? newHandle : '@' + newHandle;
+  if (newType === 'sup') {
+      if (!extraSups.includes(handleWithAt)) extraSups.push(handleWithAt);
+  } else {
+      const idx = extraSups.indexOf(handleWithAt);
+      if (idx !== -1) extraSups.splice(idx, 1);
+  }
+  localStorage.setItem('instaagent_custom_sups', JSON.stringify(extraSups));
+
   p.name = newName;
-  p.handle = newHandle.startsWith('@') ? newHandle : '@' + newHandle;
+  p.handle = handleWithAt;
   p.avatar = newAvatar;
-  if (p.type === 'arq') p.seller = newSeller;
+  p.type = newType;
+  p.seller = newSeller;
   const newFollowers = parseInt(document.getElementById('edit-profile-followers').value);
   if (!isNaN(newFollowers) && newFollowers >= 0) p.followers = newFollowers;
   else if (document.getElementById('edit-profile-followers').value === '') delete p.followers;
@@ -4730,19 +4738,28 @@ function renderArquitetosReal() {
         </div>
       </div>
 
-      <!-- Arroba -->
-      <div style="margin-bottom:16px;">
-        <label style="font-size:10px; font-family:'Syne',sans-serif; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Usuário do Instagram</label>
-        <div style="position:relative;">
-          <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:14px; font-weight:600;">@</span>
-          <input type="text" id="edit-profile-handle" placeholder="usuario"
-            style="width:100%; padding:10px 14px 10px 30px; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; box-sizing:border-box; transition:border-color 0.2s;"
-            onfocus="this.style.borderColor='var(--accent-arq)'" onblur="this.style.borderColor='var(--border)'">
+      <!-- Arroba e Tipo -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div>
+          <label style="font-size:10px; font-family:'Syne',sans-serif; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Usuário</label>
+          <div style="position:relative;">
+            <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:14px; font-weight:600;">@</span>
+            <input type="text" id="edit-profile-handle" placeholder="usuario"
+              style="width:100%; padding:10px 14px 10px 30px; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; box-sizing:border-box; transition:border-color 0.2s;"
+              onfocus="this.style.borderColor='var(--accent-arq)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:10px; font-family:'Syne',sans-serif; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Tipo de Perfil</label>
+          <select id="edit-profile-type" style="width:100%; padding:10px 14px; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; box-sizing:border-box; transition:border-color 0.2s;">
+            <option value="arq">Arquiteto</option>
+            <option value="sup">Fornecedor</option>
+          </select>
         </div>
       </div>
 
-      <!-- Vendedor (só arquiteto) -->
-      <div id="edit-group-seller" style="display:none; margin-bottom:16px;">
+      <!-- Vendedor -->
+      <div id="edit-group-seller" style="margin-bottom:16px;">
         <label style="font-size:10px; font-family:'Syne',sans-serif; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">👤 Vendedor responsável</label>
         <input type="text" id="edit-profile-seller" placeholder="Ex: Carlos (Loja SP)"
           style="width:100%; padding:10px 14px; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; box-sizing:border-box; transition:border-color 0.2s;"
