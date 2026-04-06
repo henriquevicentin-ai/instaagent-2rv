@@ -155,7 +155,7 @@ app.post('/api/sync-apify', async (req, res) => {
           comments: p.commentsCount || 0,
           imageUrl: p.displayUrl,
           postUrl: p.url,
-          postId: p.id,
+          post_id: p.id,
           seller: null // placeholder – pode ser preenchido futuramente
         });
       }
