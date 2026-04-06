@@ -3185,12 +3185,13 @@ async function initSupabaseData() {
       const { data, error } = await window.supabaseClient.from('profiles').select('*').order('created_at', { ascending: true });
       if (error) throw error;
       if (data && data.length > 0) {
+          const supRegex = /eliane|portinari|villagres|quickstep|belgotex|deca|lexxa|roca|ruffino|pierini|duefratelli|scirocco|aquece|teto|tarkett|akafloor|viscardi|santaluzia|gabceramica|strufaldi|manufatti|franke|porcelanosa|portobello|sierra|breton/i;
           window.profiles = data.map(d => ({
               handle: d.handle,
               name: d.name,
               avatar: d.avatar,
               active: d.active,
-              type: "arq",
+              type: (supRegex.test(d.handle) || supRegex.test(d.name)) ? "sup" : "arq",
               seller: d.seller
           }));
           profiles = window.profiles;
