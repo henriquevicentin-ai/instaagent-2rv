@@ -1126,6 +1126,25 @@
   .rel-sort-th:hover { color: var(--text) !important; }
   .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 10px; }
   .sort-icon.active { opacity: 1; color: var(--accent-arq); }
+
+  .arq-sort-btn {
+    padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-mid); font-size: 11px;
+    font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .arq-sort-btn:hover { border-color: var(--accent-arq); color: var(--accent-arq); }
+  .arq-sort-btn.active { background: var(--accent-arq-dim); color: var(--accent-arq); border-color: rgba(10,158,127,0.35); }
+
+  .profile-filter-btn, .profile-sort-btn {
+    padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-mid); font-size: 11px;
+    font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .profile-filter-btn:hover, .profile-sort-btn:hover { border-color: var(--accent-arq); color: var(--accent-arq); }
+  .profile-filter-btn.active { background: var(--accent-arq-dim); color: var(--accent-arq); border-color: rgba(10,158,127,0.35); }
+  .profile-sort-btn.active { background: var(--accent-arq-dim); color: var(--accent-arq); border-color: rgba(10,158,127,0.35); }
 </style>
 </head>
 <body>
@@ -1135,6 +1154,7 @@
   <div class="logo" style="padding: 24px 24px 16px; text-align: center;">
     <img src="LOGO 2RV.png" alt="2RV Revestimentos & Ambientes" style="max-width: 150px; height: auto; display: block; margin: 0 auto;" />
     <div class="logo-sub" style="margin-top: 12px; font-size: 10px; text-align: center;">Monitor de Perfis com IA</div>
+    <div style="margin-top: 6px; font-size: 9px; color: var(--border); font-family: 'DM Sans', monospace; letter-spacing: 0.3px;">v1.0 · 06/04/2025 09:04</div>
   </div>
 
   <div class="nav">
@@ -1291,6 +1311,22 @@
             </div>
             <button class="btn" id="btn-analisar-arq" style="font-size:11px; padding:5px 10px;" onclick="analyzeWithAI('arquiteto')">🤖 Analisar</button>
           </div>
+
+          <!-- BARRA DE RANKING/ORDENAÇÃO -->
+          <div id="arq-sort-bar" style="display:none; padding:10px 20px; border-bottom:1px solid var(--border); background:var(--surface2); gap:6px; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:10px; font-family:'Syne',sans-serif; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin-right:4px;">Ordenar por</span>
+            <button class="arq-sort-btn active" id="sort-btn-recente" onclick="setArqSort('recente',this)">🕐 Mais recente</button>
+            <button class="arq-sort-btn" id="sort-btn-likes" onclick="setArqSort('likes',this)">❤️ Mais likes</button>
+            <button class="arq-sort-btn" id="sort-btn-comentarios" onclick="setArqSort('comentarios',this)">💬 Mais comentários</button>
+            <button class="arq-sort-btn" id="sort-btn-engajamento" onclick="setArqSort('engajamento',this)">🔥 Engajamento</button>
+            <button class="arq-sort-btn" id="sort-btn-nome" onclick="setArqSort('nome',this)">🔤 Nome A-Z</button>
+            <button class="arq-sort-btn" id="sort-btn-seguidores" onclick="setArqSort('seguidores',this)">👥 Seguidores</button>
+            <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+              <input type="text" id="arq-search" placeholder="🔍 Buscar arquiteto..." oninput="renderFeeds()"
+                style="padding:5px 10px; border:1px solid var(--border); border-radius:20px; background:var(--surface); color:var(--text); font-size:12px; outline:none; width:180px; font-family:'DM Sans',sans-serif;">
+            </div>
+          </div>
+
           <div class="panel-body" id="feed-arquitetos" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
             <!-- Posts injetados por JS -->
           </div>
@@ -1532,6 +1568,9 @@
         <div class="panel-header">
           <div class="panel-title">👥 Perfis Monitorados</div>
           <div style="display:flex; gap:8px; margin-left:auto; align-items:center;">
+            <button class="btn" onclick="syncFollowersFromApify()" style="font-size:11px; padding:6px 14px; background:rgba(91,91,240,0.08); color:#5b5bf0; border-color:rgba(91,91,240,0.3); display:flex; align-items:center; gap:5px;">
+              👥 Buscar seguidores
+            </button>
             <button class="btn" onclick="importarArquitetos()" style="font-size:11px; padding:6px 14px; background:rgba(10,158,127,0.1); color:var(--accent-arq); border-color:rgba(10,158,127,0.3); display:flex; align-items:center; gap:5px;">
               📥 Importar 292 arquitetos
             </button>
@@ -1557,6 +1596,40 @@
             <div class="nav-dot arq"></div> Arquitetos
             <span id="subtab-arq-count" style="background:var(--accent-arq);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;"></span>
           </button>
+        </div>
+
+        <!-- BARRA DE FILTROS E ORDENAÇÃO -->
+        <div style="padding:12px 20px; border-bottom:1px solid var(--border); background:var(--surface2); display:flex; flex-direction:column; gap:10px;">
+
+          <!-- Linha 1: busca + status -->
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input type="text" id="profile-search" placeholder="🔍 Buscar por nome ou arroba..." oninput="renderProfiles()"
+              style="flex:1; min-width:200px; padding:7px 14px; border:1px solid var(--border); border-radius:20px; background:var(--surface); color:var(--text); font-size:12px; outline:none; font-family:'DM Sans',sans-serif;">
+            <div style="display:flex; gap:6px; flex-shrink:0;">
+              <button class="profile-filter-btn active" id="pf-status-all" onclick="setProfileStatusFilter('all',this)">Todos</button>
+              <button class="profile-filter-btn" id="pf-status-active" onclick="setProfileStatusFilter('active',this)">✅ Ativos</button>
+              <button class="profile-filter-btn" id="pf-status-inactive" onclick="setProfileStatusFilter('inactive',this)">⭕ Inativos</button>
+            </div>
+          </div>
+
+          <!-- Linha 2: ordenação -->
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span style="font-size:10px; font-family:'Syne',sans-serif; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; white-space:nowrap;">Ordenar</span>
+            <button class="profile-sort-btn active" id="psort-nome" onclick="setProfileSort('nome',this)">🔤 Nome A-Z</button>
+            <button class="profile-sort-btn" id="psort-recente" onclick="setProfileSort('recente',this)">🕐 Post recente</button>
+            <button class="profile-sort-btn" id="psort-likes" onclick="setProfileSort('likes',this)">❤️ Mais likes</button>
+            <button class="profile-sort-btn" id="psort-comentarios" onclick="setProfileSort('comentarios',this)">💬 Mais comentários</button>
+            <button class="profile-sort-btn" id="psort-engajamento" onclick="setProfileSort('engajamento',this)">🔥 Engajamento</button>
+            <button class="profile-sort-btn" id="psort-seguidores" onclick="setProfileSort('seguidores',this)">👥 Seguidores</button>
+          </div>
+
+          <!-- Linha 3: ações em massa -->
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-top:4px; border-top:1px dashed var(--border);">
+            <span style="font-size:10px; font-family:'Syne',sans-serif; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px;">Ação em massa</span>
+            <button onclick="toggleAllProfiles(true)" style="padding:4px 12px; border-radius:6px; border:1px solid rgba(0,212,106,0.4); background:rgba(0,212,106,0.08); color:#00a854; font-size:11px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer;">✅ Ativar todos visíveis</button>
+            <button onclick="toggleAllProfiles(false)" style="padding:4px 12px; border-radius:6px; border:1px solid rgba(224,90,90,0.4); background:rgba(224,90,90,0.08); color:#e05a5a; font-size:11px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer;">⭕ Desativar todos visíveis</button>
+            <span id="profile-count-label" style="margin-left:auto; font-size:11px; color:var(--text-muted);"></span>
+          </div>
         </div>
 
         <div class="profiles-grid" id="profiles-grid">
@@ -1780,6 +1853,20 @@ function loadFeedsFromStorage() {
         renderFornecedores();
         return;
     }
+
+    // Extrair seguidores dos posts e salvar nos perfis automaticamente
+    let profilesUpdated = false;
+    savedPosts.forEach(post => {
+        if (post.followersCount != null) {
+            const p = window.profiles.find(x => x.handle.toLowerCase() === (post.handle||'').toLowerCase());
+            if (p && (!p.followers || p.followers !== post.followersCount)) {
+                p.followers = post.followersCount;
+                profilesUpdated = true;
+            }
+        }
+    });
+    if (profilesUpdated) saveProfiles();
+
     const activeArqs = profiles.filter(p => p.type === 'arq').map(p => p.handle);
     const activeSups = profiles.filter(p => p.type === 'sup').map(p => p.handle);
     window.fornecedoresPosts = savedPosts.filter(p => activeSups.includes(p.handle));
@@ -1840,6 +1927,35 @@ function renderArquitetos() {
 
 // ========== RENDER PERFIS ==========
 let currentProfileTab = 'sup';
+let profileStatusFilter = 'all';
+let profileSortMode = 'nome';
+
+function setProfileStatusFilter(mode, btn) {
+  profileStatusFilter = mode;
+  document.querySelectorAll('.profile-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderProfiles();
+}
+
+function setProfileSort(mode, btn) {
+  profileSortMode = mode;
+  document.querySelectorAll('.profile-sort-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderProfiles();
+}
+
+function toggleAllProfiles(active) {
+  const grid = document.getElementById('profiles-grid');
+  if (!grid) return;
+  const visibleHandles = [...grid.querySelectorAll('.profile-chip')].map(c => c.dataset.handle).filter(Boolean);
+  visibleHandles.forEach(handle => {
+    const p = window.profiles.find(x => x.handle === handle);
+    if (p) p.active = active;
+  });
+  saveProfiles();
+  renderProfiles();
+  showToast('arq', active ? '✅' : '⭕', active ? 'Perfis ativados!' : 'Perfis desativados!', visibleHandles.length + ' perfis atualizados.');
+}
 
 function switchProfileTab(type) {
   currentProfileTab = type;
@@ -1867,37 +1983,128 @@ function renderProfiles() {
   const grid = document.getElementById('profiles-grid');
   if (!grid) return;
 
-  // Atualiza contadores
+  // Contadores nas sub-abas
   const supCount = (window.profiles || []).filter(p => p.type === 'sup').length;
   const arqCount = (window.profiles || []).filter(p => p.type === 'arq').length;
   if (document.getElementById('subtab-sup-count')) document.getElementById('subtab-sup-count').textContent = supCount;
   if (document.getElementById('subtab-arq-count')) document.getElementById('subtab-arq-count').textContent = arqCount;
 
-  const filtered = (window.profiles || []).filter(p => p.type === currentProfileTab);
+  const allPosts = JSON.parse(localStorage.getItem('instaagent_posts') || '[]');
+
+  // Base
+  let filtered = (window.profiles || []).filter(p => p.type === currentProfileTab);
+
+  // Filtro de busca
+  const searchVal = (document.getElementById('profile-search')?.value || '').toLowerCase().trim();
+  if (searchVal) {
+    filtered = filtered.filter(p =>
+      (p.name || '').toLowerCase().includes(searchVal) ||
+      (p.handle || '').toLowerCase().includes(searchVal) ||
+      (p.seller || '').toLowerCase().includes(searchVal)
+    );
+  }
+
+  // Filtro de status
+  if (profileStatusFilter === 'active') filtered = filtered.filter(p => p.active);
+  else if (profileStatusFilter === 'inactive') filtered = filtered.filter(p => !p.active);
+
+  // Ordenação
+  filtered = [...filtered];
+  switch(profileSortMode) {
+    case 'nome':
+      filtered.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'pt-BR'));
+      break;
+    case 'recente':
+      filtered.sort((a,b) => {
+        const lastA = allPosts.filter(x=>x.handle===a.handle).sort((x,y)=>new Date(y.time)-new Date(x.time))[0];
+        const lastB = allPosts.filter(x=>x.handle===b.handle).sort((x,y)=>new Date(y.time)-new Date(x.time))[0];
+        return (new Date(lastB?.time||0)) - (new Date(lastA?.time||0));
+      });
+      break;
+    case 'likes':
+      filtered.sort((a,b) => {
+        const postsA = allPosts.filter(x=>x.handle===a.handle);
+        const postsB = allPosts.filter(x=>x.handle===b.handle);
+        const avgA = postsA.length ? postsA.reduce((s,x)=>s+(x.likes||0),0)/postsA.length : 0;
+        const avgB = postsB.length ? postsB.reduce((s,x)=>s+(x.likes||0),0)/postsB.length : 0;
+        return avgB - avgA;
+      });
+      break;
+    case 'comentarios':
+      filtered.sort((a,b) => {
+        const postsA = allPosts.filter(x=>x.handle===a.handle);
+        const postsB = allPosts.filter(x=>x.handle===b.handle);
+        const avgA = postsA.length ? postsA.reduce((s,x)=>s+(x.comments||0),0)/postsA.length : 0;
+        const avgB = postsB.length ? postsB.reduce((s,x)=>s+(x.comments||0),0)/postsB.length : 0;
+        return avgB - avgA;
+      });
+      break;
+    case 'engajamento':
+      filtered.sort((a,b) => {
+        const postsA = allPosts.filter(x=>x.handle===a.handle);
+        const postsB = allPosts.filter(x=>x.handle===b.handle);
+        const engA = postsA.reduce((s,x)=>s+(x.likes||0)+(x.comments||0)*2,0);
+        const engB = postsB.reduce((s,x)=>s+(x.likes||0)+(x.comments||0)*2,0);
+        return engB - engA;
+      });
+      break;
+    case 'seguidores':
+      filtered.sort((a,b) => (b.followers||0) - (a.followers||0));
+      break;
+  }
+
+  // Label contador
+  const label = document.getElementById('profile-count-label');
+  const activeCount = filtered.filter(p => p.active).length;
+  if (label) label.textContent = `${filtered.length} exibidos · ${activeCount} ativos`;
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:13px;">Nenhum perfil cadastrado nesta categoria.</div>';
+    grid.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:13px; grid-column:1/-1;">Nenhum perfil encontrado.</div>';
     return;
   }
 
+  const accentColor = currentProfileTab === 'arq' ? 'var(--accent-arq)' : 'var(--accent-sup)';
+  const accentDim   = currentProfileTab === 'arq' ? 'var(--accent-arq-dim)' : 'var(--accent-sup-dim)';
+
   grid.innerHTML = filtered.map(p => {
     const isArq = p.type === 'arq';
+    const pPosts = allPosts.filter(x => x.handle === p.handle);
+    const avgLikes = pPosts.length ? Math.round(pPosts.reduce((s,x)=>s+(x.likes||0),0)/pPosts.length) : 0;
+    const engScore = pPosts.reduce((s,x)=>s+(x.likes||0)+(x.comments||0)*2,0);
+    const lastPost = [...pPosts].sort((a,b)=>new Date(b.time)-new Date(a.time))[0];
+    const lastDate = lastPost ? new Date(lastPost.time).toLocaleDateString('pt-BR') : null;
+
     return `
-      <div class="profile-chip" style="display:flex; flex-direction:column; align-items:flex-start; height:auto; gap:10px; padding:12px;">
+      <div class="profile-chip" data-handle="${p.handle}" style="display:flex; flex-direction:column; align-items:flex-start; height:auto; gap:8px; padding:12px; ${p.active ? '' : 'opacity:0.6;'}">
         <div style="display:flex; width:100%; align-items:center; gap:8px;">
-          <div class="avatar ${p.type}">${p.avatar}</div>
-          <div style="display:flex; flex-direction:column; flex:1;">
-            <div style="font-weight:700; font-size:13px;">${p.name} ${isArq && p.seller ? '<span style="font-weight:normal; font-size:10px; color:#999;">(' + p.seller + ')</span>' : ''}</div>
+          <div class="avatar ${p.type}" style="flex-shrink:0;">${p.avatar}</div>
+          <div style="display:flex; flex-direction:column; flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${p.name}
+              ${isArq && p.seller ? '<span style="font-weight:normal; font-size:10px; color:#999;"> ('+p.seller+')</span>' : ''}
+            </div>
             <div style="font-size:11px; color:var(--text-muted);">${p.handle}</div>
           </div>
-          <div style="display:flex; gap:4px;">
-            <button class="action-btn" title="Editar Perfil" style="padding:4px;" onclick="openEditProfile('${p.handle}')">✏️</button>
-            <button class="action-btn" title="Excluir Perfil" style="padding:4px;" onclick="deleteProfile('${p.handle}')">🗑️</button>
+          <div style="display:flex; gap:4px; flex-shrink:0;">
+            <button class="action-btn" title="Editar" style="padding:4px;" onclick="openEditProfile('${p.handle}')">✏️</button>
+            <button class="action-btn" title="Excluir" style="padding:4px;" onclick="deleteProfile('${p.handle}')">🗑️</button>
           </div>
         </div>
+
+        <!-- Métricas rápidas -->
+        ${pPosts.length > 0 ? `
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:10px; background:var(--surface2); padding:2px 8px; border-radius:10px; color:var(--text-muted);">❤️ ${avgLikes.toLocaleString('pt-BR')} média</span>
+          <span style="font-size:10px; background:var(--surface2); padding:2px 8px; border-radius:10px; color:var(--text-muted);">🔥 ${engScore.toLocaleString('pt-BR')}</span>
+          ${p.followers ? '<span style="font-size:10px; background:var(--surface2); padding:2px 8px; border-radius:10px; color:var(--text-muted);">👥 '+Number(p.followers).toLocaleString('pt-BR')+'</span>' : ''}
+          ${lastDate ? '<span style="font-size:10px; background:var(--surface2); padding:2px 8px; border-radius:10px; color:var(--text-muted);">🕐 '+lastDate+'</span>' : ''}
+        </div>` : (p.followers ? `<div><span style="font-size:10px; background:var(--surface2); padding:2px 8px; border-radius:10px; color:var(--text-muted);">👥 ${Number(p.followers).toLocaleString('pt-BR')}</span></div>` : '')}
+
         <div style="display:flex; width:100%; justify-content:space-between; border-top:1px dashed var(--border); padding-top:8px; align-items:center;">
-          <label style="font-size:11px; cursor:pointer;"><input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleProfileActive('${p.handle}')"> Ativo (Monitorando)</label>
-          ${p.followers ? `<span style="font-size:10px; color:var(--text-muted);">👥 ${Number(p.followers).toLocaleString('pt-BR')}</span>` : ''}
+          <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleProfileActive('${p.handle}')">
+            <span style="color:${p.active ? '#00a854' : 'var(--text-muted)'}; font-weight:600;">${p.active ? '● Monitorando' : '○ Inativo'}</span>
+          </label>
         </div>
       </div>`;
   }).join('');
@@ -1933,6 +2140,62 @@ function importarArquitetos() {
   showToast('arq', '📥', added + ' arquitetos importados!', (lista.length - added) + ' já existiam e foram mantidos.');
 }
 
+
+async function syncFollowersFromApify() {
+  const token = localStorage.getItem('instaagent_apify_token') || document.getElementById('apify-token')?.value?.trim();
+  if (!token || !token.startsWith('apify_api_')) {
+    showToast('sup', '⚠️', 'Token ausente', 'Configure o token do Apify em Configurações primeiro.');
+    return;
+  }
+
+  const targetProfiles = (window.profiles || []).filter(p => p.type === currentProfileTab);
+  if (targetProfiles.length === 0) {
+    showToast('sup', '⚠️', 'Sem perfis', 'Nenhum perfil nesta aba.');
+    return;
+  }
+
+  showToast('arq', '🔄', 'Buscando seguidores...', `Consultando ${targetProfiles.length} perfis no Apify. Aguarde.`);
+
+  const usernames = targetProfiles.map(p => p.handle.replace('@', ''));
+
+  try {
+    // Chamar o actor de profile scraper diretamente
+    const runRes = await fetch(`https://api.apify.com/v2/acts/apify~instagram-profile-scraper/runs?token=${token}&waitForFinish=60`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernames, resultsLimit: 1 })
+    });
+    const runData = await runRes.json();
+    const datasetId = runData.defaultDatasetId || runData.data?.defaultDatasetId;
+
+    if (!datasetId) throw new Error('Não foi possível iniciar o scraper.');
+
+    // Buscar resultados do dataset
+    const itemsRes = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&limit=500`);
+    const items = await itemsRes.json();
+    const list = Array.isArray(items) ? items : (items.items || []);
+
+    let updated = 0;
+    list.forEach(item => {
+      if (item.followersCount == null) return;
+      const handle = '@' + (item.username || '');
+      const p = window.profiles.find(x => x.handle.toLowerCase() === handle.toLowerCase());
+      if (p) {
+        p.followers = item.followersCount;
+        updated++;
+      }
+    });
+
+    saveProfiles();
+    renderProfiles();
+    showToast('arq', '✅', `${updated} perfis atualizados!`, 'Seguidores sincronizados com sucesso.');
+    updateConnectionStatus();
+
+  } catch(e) {
+    console.error('[syncFollowers]', e);
+    showToast('sup', '❌', 'Erro ao buscar seguidores', e.message);
+  }
+}
 
 function saveProfiles() {
   localStorage.setItem('instaagent_profiles', JSON.stringify(window.profiles));
@@ -2274,6 +2537,8 @@ function showTab(tab) {
         populateSellerFilter();
         const bArq = document.getElementById('btn-analisar-arq');
         if(bArq) bArq.style.display = 'flex';
+        const sortBar = document.getElementById('arq-sort-bar');
+        if(sortBar) sortBar.style.display = 'flex';
     } else if (tab === 'imggen') {
         if(imggenPanel) imggenPanel.style.display = 'block';
     } else if (tab === 'perfis') {
@@ -2786,6 +3051,15 @@ function populateSellerFilter() {
         sellers.map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
+let arqSortMode = 'recente';
+
+function setArqSort(mode, btn) {
+  arqSortMode = mode;
+  document.querySelectorAll('.arq-sort-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderFeeds();
+}
+
 function renderArquitetosReal() {
     const container = document.getElementById('feed-arquitetos');
     let posts = window.arquitetosPosts || [];
@@ -2801,6 +3075,7 @@ function renderArquitetosReal() {
             const days = ranges[dateFilter] || 9999;
             posts = posts.filter(p => (now - new Date(p.time).getTime()) < days * 86400000);
         }
+
         // Filtro de vendedor
         const sellerFilter = document.getElementById('filter-seller-a')?.value || 'all';
         if (sellerFilter !== 'all') {
@@ -2809,27 +3084,66 @@ function renderArquitetosReal() {
                 .map(p => p.handle);
             posts = posts.filter(p => arqHandles.includes(p.handle));
         }
+
+        // Busca por nome/texto
+        const searchVal = (document.getElementById('arq-search')?.value || '').toLowerCase().trim();
+        if (searchVal) {
+            posts = posts.filter(p =>
+                (p.user || '').toLowerCase().includes(searchVal) ||
+                (p.handle || '').toLowerCase().includes(searchVal) ||
+                (p.text || '').toLowerCase().includes(searchVal)
+            );
+        }
+
+        // Ordenação
+        posts = [...posts];
+        switch(arqSortMode) {
+            case 'recente':
+                posts.sort((a,b) => new Date(b.time) - new Date(a.time));
+                break;
+            case 'likes':
+                posts.sort((a,b) => (b.likes||0) - (a.likes||0));
+                break;
+            case 'comentarios':
+                posts.sort((a,b) => (b.comments||0) - (a.comments||0));
+                break;
+            case 'engajamento':
+                posts.sort((a,b) => ((b.likes||0) + (b.comments||0)*2) - ((a.likes||0) + (a.comments||0)*2));
+                break;
+            case 'nome':
+                posts.sort((a,b) => (a.user||'').localeCompare(b.user||'', 'pt-BR'));
+                break;
+            case 'seguidores':
+                posts.sort((a,b) => {
+                    const pA = (window.profiles||[]).find(x => x.handle === a.handle);
+                    const pB = (window.profiles||[]).find(x => x.handle === b.handle);
+                    return (pB?.followers||0) - (pA?.followers||0);
+                });
+                break;
+        }
     }
 
     container.innerHTML = posts.map(p => {
         const imgHtml = p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:100%; border-radius:8px; margin-bottom:12px; object-fit:cover; max-height:400px;" onerror="this.style.display=\'none\'" />' : '';
         const safeText = p.text.replace(/\n|\r/g, ' ').replace(/"/g, '&quot;').replace(/'/g, "\\'");
-        // Vendedor do arquiteto
         const profile = (window.profiles || []).find(x => x.handle === p.handle);
         const sellerTag = profile?.seller ? '<span style="font-size:10px; background:var(--accent-arq-dim); color:var(--accent-arq); border-radius:4px; padding:2px 7px; margin-left:6px;">👤 ' + profile.seller + '</span>' : '';
+        const followersTag = profile?.followers ? '<span style="font-size:10px; color:var(--text-muted); margin-left:6px;">👥 ' + Number(profile.followers).toLocaleString('pt-BR') + '</span>' : '';
+        const engajamento = (p.likes||0) + (p.comments||0)*2;
 
         return '<div class="post-item ' + (p.isNew ? 'new arq' : '') + '">' +
             '<div class="post-profile">' +
-            '<div class="avatar arq">' + p.user.charAt(0).toUpperCase() + '</div>' +
+            '<div class="avatar arq">' + (p.user||'?').charAt(0).toUpperCase() + '</div>' +
             '<div class="post-meta">' +
-            '<div class="post-user">' + p.user + sellerTag + '</div>' +
-            '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString() + '</div>' +
+            '<div class="post-user">' + (p.user||p.handle) + sellerTag + followersTag + '</div>' +
+            '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString('pt-BR') + '</div>' +
             '</div>' +
             '</div>' + imgHtml +
             '<div class="post-text">' + p.text + '</div>' +
             '<div class="post-metrics">' +
-            '<div class="metric">❤️ ' + p.likes.toLocaleString("pt-BR") + '</div>' +
-            '<div class="metric">💬 ' + p.comments + '</div>' +
+            '<div class="metric">❤️ ' + (p.likes||0).toLocaleString("pt-BR") + '</div>' +
+            '<div class="metric">💬 ' + (p.comments||0) + '</div>' +
+            '<div class="metric" style="margin-left:auto; font-size:10px; color:var(--accent-arq);">🔥 ' + engajamento.toLocaleString('pt-BR') + '</div>' +
             '</div>' +
             '<div class="post-actions">' +
             '<button class="action-btn" style="color:var(--accent-arq); background:var(--accent-arq-dim);" onclick="draftDirect(\'' + p.handle + '\', \'' + safeText + '\')">💬 Abordar no Direct</button>' +
