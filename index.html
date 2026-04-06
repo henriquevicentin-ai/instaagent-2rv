@@ -1800,13 +1800,46 @@ async function syncApifyFeeds() {
     showToast('sup', '🔄', 'Sincronizando com Apify...', 'Isso pode demorar um pouco. Aguarde.');
     
     try {
-        const res = await fetch('http://localhost:3000/api/sync-apify', {
+                const usernames = activeProfiles.map(p => p.replace('@', ''));
+        const runUrl = `https://api.apify.com/v2/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=${token}`;
+        
+        const apifyRes = await fetch(runUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apifyToken: token, profiles: activeProfiles })
+            body: JSON.stringify({ usernames: usernames })
         });
         
-        const data = await res.json();
+        if (!apifyRes.ok) {
+            throw new Error(`Erro Apify: ${apifyRes.status}`);
+        }
+        
+        const apifyItems = await apifyRes.json();
+        const scrapedPosts = [];
+        const profileStats = [];
+        
+        for (const item of apifyItems) {
+            const handle = '@' + item.username;
+            if (item.followersCount != null) {
+                profileStats.push({ username: item.username, followersCount: item.followersCount });
+            }
+            if (item.latestPosts && item.latestPosts.length > 0) {
+                const firstPost = item.latestPosts[0];
+                scrapedPosts.push({
+                    user: item.fullName || item.username,
+                    handle: handle,
+                    avatar: item.profilePicUrl || '?',
+                    time: firstPost.timestamp,
+                    text: firstPost.caption || '',
+                    likes: firstPost.likesCount || 0,
+                    comments: firstPost.commentsCount || 0,
+                    imageUrl: firstPost.displayUrl,
+                    postUrl: firstPost.url,
+                    postId: firstPost.id
+                });
+            }
+        }
+        
+        const data = { success: true, count: scrapedPosts.length, posts: scrapedPosts, profileStats: profileStats };
         if (data.success) {
             showToast('arq', '✅', 'Sincronizado!', `${data.count} posts extraídos com sucesso.`);
             const existingPosts = JSON.parse(localStorage.getItem('instaagent_posts')) || [];
