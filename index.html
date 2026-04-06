@@ -3185,15 +3185,18 @@ async function initSupabaseData() {
       const { data, error } = await window.supabaseClient.from('profiles').select('*').order('created_at', { ascending: true });
       if (error) throw error;
       if (data && data.length > 0) {
-          const supRegex = /eliane|portinari|villagres|quickstep|belgotex|deca|lexxa|roca|ruffino|pierini|duefratelli|scirocco|aquece|teto|tarkett|akafloor|viscardi|santaluzia|gabceramica|strufaldi|manufatti|franke|porcelanosa|portobello|sierra|breton/i;
-          window.profiles = data.map(d => ({
-              handle: d.handle,
-              name: d.name,
-              avatar: d.avatar,
-              active: d.active,
-              type: (supRegex.test(d.handle) || supRegex.test(d.name)) ? "sup" : "arq",
-              seller: d.seller
-          }));
+          const extraSups = JSON.parse(localStorage.getItem('instaagent_custom_sups') || '[]');
+          window.profiles = data.map(d => {
+              const isSup = supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle);
+              return {
+                  handle: d.handle,
+                  name: d.name,
+                  avatar: d.avatar,
+                  active: d.active,
+                  type: isSup ? "sup" : "arq",
+                  seller: d.seller
+              };
+          });
           profiles = window.profiles;
           
           // Guardar backup local
@@ -3623,7 +3626,15 @@ function renderProfiles() {
 function deleteProfile(handle) {
   if (confirm('Tem certeza que deseja remover o perfil ' + handle + '?')) {
     window.profiles = window.profiles.filter(p => p.handle !== handle);
-    document.getElementById('stat-profiles').textContent = window.profiles.length; saveProfiles(); renderProfiles();
+    document.getElementById('stat-profiles').textContent = window.profiles.length; 
+    
+    // Explicit Delete from Cloud DB
+    if (window.supabaseClient) {
+        window.supabaseClient.from('profiles').delete().eq('handle', handle).then(({error}) => {
+            if(error) console.error("Cloud Delete Erro:", error);
+        });
+    }
+    saveProfiles(); renderProfiles();
   }
 }
 
@@ -4793,7 +4804,14 @@ function saveNewProfile() {
        return;
     }
     
-    window.profiles.push({ name, handle, avatar, type, active: true }); saveProfiles();
+    if (type === 'sup') {
+        const extraSups = JSON.parse(localStorage.getItem('instaagent_custom_sups') || '[]');
+        if (!extraSups.includes(handle)) extraSups.push(handle);
+        localStorage.setItem('instaagent_custom_sups', JSON.stringify(extraSups));
+    }
+
+    window.profiles.push({ name, handle, avatar, type, active: true }); 
+    saveProfiles();
     localStorage.setItem('instaagent_profiles', JSON.stringify(profiles));
     
     document.getElementById('new-profile-name').value = '';
@@ -4802,7 +4820,7 @@ function saveNewProfile() {
     
     document.getElementById('modal-add-profile').style.display='none';
     renderProfiles();
-    showToast('sup', '✨', 'Perfil Adicionado!', 'O painel principal foi atualizado.');
+    showToast('sup', '✨', 'Perfil Adicionado!', 'O painel principal foi atualizado e salvo na nuvem.');
 }
 </script>
 </body>
