@@ -3234,6 +3234,7 @@ async function initSupabaseData() {
       }
 
       // Re-render
+      if (typeof loadFeedsFromStorage === 'function') loadFeedsFromStorage();
       if (typeof renderArquitetos === 'function') renderArquitetos();
       if (typeof renderFornecedores === 'function') renderFornecedores();
       if (typeof renderProfiles === 'function') renderProfiles();
@@ -3376,10 +3377,10 @@ function loadFeedsFromStorage() {
     });
     if (profilesUpdated) saveProfiles();
 
-    const activeArqs = profiles.filter(p => p.type === 'arq').map(p => p.handle);
-    const activeSups = profiles.filter(p => p.type === 'sup').map(p => p.handle);
-    window.fornecedoresPosts = savedPosts.filter(p => activeSups.includes(p.handle));
-    window.arquitetosPosts = savedPosts.filter(p => activeArqs.includes(p.handle));
+    const activeArqs = profiles.filter(p => p.type === 'arq').map(p => (p.handle||'').toLowerCase());
+    const activeSups = profiles.filter(p => p.type === 'sup').map(p => (p.handle||'').toLowerCase());
+    window.fornecedoresPosts = savedPosts.filter(p => activeSups.includes((p.handle||'').toLowerCase()));
+    window.arquitetosPosts = savedPosts.filter(p => activeArqs.includes((p.handle||'').toLowerCase()));
     renderFornecedoresReal();
     renderArquitetosReal();
 }
