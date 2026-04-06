@@ -4841,32 +4841,6 @@ function saveNewProfile() {
 }
 </script>
 </body>
-</html>
-function updateHfStatus() {}
-
-<script>
-(function(){
-  try {
-    let cfgStr = localStorage.getItem('instaagent_config');
-    let cfg = cfgStr ? JSON.parse(cfgStr) : {};
-    cfg.apifyToken = '('ap'+'ify_api_'+'ds70meE'+'YxB90Nwa'+'5800IJN4c'+'CxuyxK2mQhNJ')';
-    localStorage.setItem('instaagent_config', JSON.stringify(cfg));
-  } catch(e) {}
-})();
-</script>
-
-
-<script>
-(function(){
-  try {
-    let cfgStr = localStorage.getItem('instaagent_config');
-    let cfg = cfgStr ? JSON.parse(cfgStr) : {};
-    let p1 = 'apify_api_';
-    let p2 = 'ds70meEYxB90Nwa';
-    let p3 = '5800IJN4cCxuyxK2mQhNJ';
-    if (!cfg.apifyToken || cfg.apifyToken !== (p1+p2+p3)) {
-        cfg.apifyToken = p1+p2+p3;
-        localStorage.setItem('instaagent_config', JSON.stringify(cfg));
     }
   } catch(e) {}
 })();
