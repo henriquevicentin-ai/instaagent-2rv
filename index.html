@@ -1146,6 +1146,7 @@
   .profile-filter-btn.active { background: var(--accent-arq-dim); color: var(--accent-arq); border-color: rgba(10,158,127,0.35); }
   .profile-sort-btn.active { background: var(--accent-arq-dim); color: var(--accent-arq); border-color: rgba(10,158,127,0.35); }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
 
@@ -4290,8 +4291,87 @@ if (localStorage.getItem('profiles_version') !== currentProfilesVersion) {
   localStorage.setItem('profiles_version', currentProfilesVersion);
 }
 
-let profiles = JSON.parse(localStorage.getItem('instaagent_profiles')) || defaultProfiles;
+let profiles = [];
 window.profiles = profiles;
+
+async function initSupabaseData() {
+  if (typeof supabase === 'undefined') {
+    // fallback
+    profiles = JSON.parse(localStorage.getItem('instaagent_profiles')) || defaultProfiles;
+    window.profiles = profiles;
+    return;
+  }
+
+  window.supabaseClient = supabase.createClient(
+    'https://vzbbdgpjpteowpnklxly.supabase.co',
+    'sb_publishable_NEznO1iLBT1YSqEkw6-yKw_fUs7g7RH'
+  );
+
+  const spinner = document.createElement('div');
+  spinner.id = 'supa-loading';
+  spinner.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:999999;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:"Syne"';
+  spinner.innerHTML = '<div style="width:40px;height:40px;border:4px solid var(--accent-sup);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite"></div><h3 style="margin-top:20px;color:var(--text);font-weight:600">Sincronizando Mídia Base (Cloud)...</h3><style>@keyframes spin{100%{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(spinner);
+
+  try {
+      const { data, error } = await window.supabaseClient.from('profiles').select('*').order('created_at', { ascending: true });
+      if (error) throw error;
+      if (data && data.length > 0) {
+          window.profiles = data.map(d => ({
+              handle: d.handle,
+              name: d.name,
+              avatar: d.avatar,
+              active: d.active,
+              type: "arq",
+              seller: d.seller
+          }));
+          profiles = window.profiles;
+          
+          // Guardar backup local
+          localStorage.setItem('instaagent_profiles', JSON.stringify(profiles));
+      }
+
+      // Re-render
+      if (typeof renderArquitetos === 'function') renderArquitetos();
+      if (typeof renderFornecedores === 'function') renderFornecedores();
+      if (typeof renderProfiles === 'function') renderProfiles();
+      if (typeof window.renderFeeds === 'function') window.renderFeeds();
+      if (typeof showTab === 'function') showTab(window.currentTab || 'dashboard');
+      
+  } catch(err) {
+      console.error("Supabase Error:", err);
+      profiles = JSON.parse(localStorage.getItem('instaagent_profiles')) || defaultProfiles;
+      window.profiles = profiles;
+  }
+  
+  if(document.getElementById('supa-loading')) document.getElementById('supa-loading').remove();
+}
+
+// Intercept saveProfiles to save to DB as well
+const originalSaveProfiles = window.saveProfiles;
+window.saveProfiles = async function() {
+    // Call old first to update local storage visually immediately
+    if (typeof originalSaveProfiles === 'function') originalSaveProfiles();
+    
+    if (window.supabaseClient && window.profiles) {
+        const toUpdate = window.profiles.map(d => ({
+              handle: d.handle,
+              name: d.name,
+              avatar: d.avatar,
+              active: d.active,
+              seller: d.seller || null
+        }));
+        
+        try {
+            await window.supabaseClient.from('profiles').upsert(toUpdate, { onConflict: 'handle' });
+            console.log("Supabase UPSERT SUCCESS");
+        } catch(e) { console.error("UPSERT Error:", e); }
+    }
+};
+
+// Bootstrap now
+document.addEventListener('DOMContentLoaded', initSupabaseData);
+
 
 
 // --- APIFY SYNC LOGIC ---
