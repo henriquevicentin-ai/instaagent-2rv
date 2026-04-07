@@ -4657,33 +4657,33 @@ function renderFornecedoresReal() {
     
     container.innerHTML = posts.map(p => {
         const compactClass = isCompact ? ' compact-mode' : '';
-        const imgHtml = p.imageUrl ? '<img class="post-img" src="' + p.imageUrl + '" onerror="this.style.display=\\'none\\'"/>' : '';
+        const imgHtml = p.imageUrl ? `<img class="post-img" src="${p.imageUrl}" onerror="this.style.display='none'"/>` : '';
         const safeText = (p.text||"").replace(/\n|\r/g, ' ').replace(/"/g, '&quot;').replace(/'/g, "\\'");
         const profile = (window.profiles || []).find(x => (x.handle||'').toLowerCase() === (p.handle||'').toLowerCase());
-        const followersTag = profile?.followers ? '<span style="font-size:10px; color:var(--text-muted); margin-left:6px;">👥 ' + Number(profile.followers).toLocaleString('pt-BR') + '</span>' : '';
+        const followersTag = profile?.followers ? `<span style="font-size:10px; color:var(--text-muted); margin-left:6px;">👥 ${Number(profile.followers).toLocaleString('pt-BR')}</span>` : '';
         
-        return '<div class="post-item ' + (p.isNew ? 'new' : '') + compactClass + '" onclick="goToPost(\\'' + (p.url || 'https://instagram.com/' + (p.handle||'').replace('@','')) + '\\', event)">' +
-            '<div class="compact-img-wrap">' + imgHtml + '</div>' + 
-            '<div class="compact-content-wrap">' +
-                '<div class="post-profile">' +
-                    '<div class="avatar sup">' + (p.user||'?').charAt(0).toUpperCase() + '</div>' +
-                    '<div class="post-meta">' +
-                        '<div class="post-user">' + (p.user||p.handle) + followersTag + '</div>' +
-                        '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString() + '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="post-text">' + p.text + '</div>' +
-                '<div class="post-metrics">' +
-                    '<div class="metric"><i class="ph-fill ph-heart"></i> ' + (p.likes||0).toLocaleString("pt-BR") + '</div>' +
-                    '<div class="metric"><i class="ph-fill ph-chat-circle"></i> ' + (p.comments||0) + '</div>' +
-                '</div>' +
-                '<div class="post-actions">' +
-                    '<button class="action-btn" onclick="copyCaption(\\'' + safeText + '\\', event)">📋 Copiar</button>' +
-                    '<button class="action-btn cta" onclick="adaptPost(\\'' + p.user + '\\', \\'' + safeText + '\\', event)">✨ Analisar</button>' +
-                    '<button class="action-btn read-btn" onclick="markAsRead(\\'' + p.id + '\\', event)">Marcar Lido</button>' +
-                '</div>' +
-            '</div>' + 
-        '</div>';
+        return `<div class="post-item ${p.isNew ? 'new' : ''}${compactClass}" onclick="goToPost('${p.url || 'https://instagram.com/' + (p.handle||'').replace('@','')}', event)">
+            <div class="compact-img-wrap">${imgHtml}</div>
+            <div class="compact-content-wrap">
+                <div class="post-profile">
+                    <div class="avatar sup">${(p.user||'?').charAt(0).toUpperCase()}</div>
+                    <div class="post-meta">
+                        <div class="post-user">${p.user||p.handle}${followersTag}</div>
+                        <div class="post-time">${p.handle} &middot; ${new Date(p.time).toLocaleDateString()}</div>
+                    </div>
+                </div>
+                <div class="post-text">${p.text}</div>
+                <div class="post-metrics">
+                    <div class="metric"><i class="ph-fill ph-heart"></i> ${(p.likes||0).toLocaleString("pt-BR")}</div>
+                    <div class="metric"><i class="ph-fill ph-chat-circle"></i> ${p.comments||0}</div>
+                </div>
+                <div class="post-actions">
+                    <button class="action-btn" onclick="copyCaption('${safeText}', event)">📋 Copiar</button>
+                    <button class="action-btn cta" onclick="adaptPost('${p.user}', '${safeText}', event)">✨ Analisar</button>
+                    <button class="action-btn read-btn" onclick="markAsRead('${p.id}', event)">Marcar Lido</button>
+                </div>
+            </div>
+        </div>`;
     }).join('') || '<div style="padding:40px; text-align:center; color:var(--text-muted); grid-column:1/-1;">Nenhum post encontrado.</div>';
 }
 
@@ -4786,39 +4786,37 @@ function renderArquitetosReal() {
         }
     }
 
-
-
     container.innerHTML = posts.map(p => {
         const compactClass = isCompact ? ' compact-mode' : '';
-        const imgHtml = p.imageUrl ? '<img class="post-img" src="' + p.imageUrl + '" onerror="this.style.display=\\'none\\'"/>' : '';
+        const imgHtml = p.imageUrl ? `<img class="post-img" src="${p.imageUrl}" onerror="this.style.display='none'"/>` : '';
         const safeText = (p.text||"").replace(/\n|\r/g, ' ').replace(/"/g, '&quot;').replace(/'/g, "\\'");
         const profile = (window.profiles || []).find(x => x.handle === p.handle);
-        const sellerTag = profile?.seller ? '<span style="font-size:10px; background:var(--accent-arq-dim); color:var(--accent-arq); border-radius:4px; padding:2px 7px; margin-left:6px;">👤 ' + profile.seller + '</span>' : '';
-        const followersTag = profile?.followers ? '<span style="font-size:10px; color:var(--text-muted); margin-left:6px;">👥 ' + Number(profile.followers).toLocaleString('pt-BR') + '</span>' : '';
+        const sellerTag = profile?.seller ? `<span style="font-size:10px; background:var(--accent-arq-dim); color:var(--accent-arq); border-radius:4px; padding:2px 7px; margin-left:6px;">👤 ${profile.seller}</span>` : '';
+        const followersTag = profile?.followers ? `<span style="font-size:10px; color:var(--text-muted); margin-left:6px;">👥 ${Number(profile.followers).toLocaleString('pt-BR')}</span>` : '';
         const engajamento = (p.likes||0) + (p.comments||0)*2;
 
-        return '<div class="post-item ' + (p.isNew ? 'new arq' : '') + compactClass + '" onclick="goToPost(\\'' + (p.url || 'https://instagram.com/' + (p.handle||'').replace('@','')) + '\\', event)">' +
-            '<div class="compact-img-wrap">' + imgHtml + '</div>' + 
-            '<div class="compact-content-wrap">' +
-                '<div class="post-profile">' +
-                    '<div class="avatar arq">' + (p.user||'?').charAt(0).toUpperCase() + '</div>' +
-                    '<div class="post-meta">' +
-                        '<div class="post-user">' + (p.user||p.handle) + sellerTag + followersTag + '</div>' +
-                        '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString('pt-BR') + '</div>' +
-                    '</div>' +
-                '</div>' + 
-                '<div class="post-text">' + p.text + '</div>' +
-                '<div class="post-metrics">' +
-                    '<div class="metric"><i class="ph-fill ph-heart"></i> ' + (p.likes||0).toLocaleString("pt-BR") + '</div>' +
-                    '<div class="metric"><i class="ph-fill ph-chat-circle"></i> ' + (p.comments||0) + '</div>' +
-                    '<div class="metric" style="margin-left:auto; font-size:10px; color:var(--accent-arq);">🔥 ' + engajamento.toLocaleString('pt-BR') + '</div>' +
-                '</div>' +
-                '<div class="post-actions">' +
-                    '<button class="action-btn" style="color:var(--accent-arq); background:var(--accent-arq-dim);" onclick="draftDirect(\\'' + p.handle + '\\', \\'' + safeText + '\\', event)">💬 Direct</button>' +
-                    '<button class="action-btn read-btn" onclick="markAsRead(\\'' + p.id + '\\', event)">Marcar Lido</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
+        return `<div class="post-item ${p.isNew ? 'new arq' : ''}${compactClass}" onclick="goToPost('${p.url || 'https://instagram.com/' + (p.handle||'').replace('@','')}', event)">
+            <div class="compact-img-wrap">${imgHtml}</div>
+            <div class="compact-content-wrap">
+                <div class="post-profile">
+                    <div class="avatar arq">${(p.user||'?').charAt(0).toUpperCase()}</div>
+                    <div class="post-meta">
+                        <div class="post-user">${p.user||p.handle}${sellerTag}${followersTag}</div>
+                        <div class="post-time">${p.handle} &middot; ${new Date(p.time).toLocaleDateString('pt-BR')}</div>
+                    </div>
+                </div>
+                <div class="post-text">${p.text}</div>
+                <div class="post-metrics">
+                    <div class="metric"><i class="ph-fill ph-heart"></i> ${(p.likes||0).toLocaleString("pt-BR")}</div>
+                    <div class="metric"><i class="ph-fill ph-chat-circle"></i> ${p.comments||0}</div>
+                    <div class="metric" style="margin-left:auto; font-size:10px; color:var(--accent-arq);">🔥 ${engajamento.toLocaleString('pt-BR')}</div>
+                </div>
+                <div class="post-actions">
+                    <button class="action-btn" style="color:var(--accent-arq); background:var(--accent-arq-dim);" onclick="draftDirect('${p.handle}', '${safeText}', event)">💬 Direct</button>
+                    <button class="action-btn read-btn" onclick="markAsRead('${p.id}', event)">Marcar Lido</button>
+                </div>
+            </div>
+        </div>`;
     }).join('') || '<div style="padding:40px; text-align:center; color:var(--text-muted); grid-column:1/-1;">Nenhum post encontrado.</div>';
 }
 
