@@ -3187,7 +3187,8 @@ async function initSupabaseData() {
       if (data && data.length > 0) {
           const extraSups = JSON.parse(localStorage.getItem('instaagent_custom_sups') || '[]');
           window.profiles = data.map(d => {
-              const isSup = supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle);
+          const supRegex = /(revestimento|portinari|ceusa|elianerevestimentos|portobello|duratex|deca|tramontina|docol|biancogres|castelatto|ceramicaportinari|tarkett|eucafloor|guararapes|arauco|sudati|berneck|masisa|fibraplac|florplac|mdf|porcelanato|ceramica|acabamentos|marmoraria|granito|pedra|quartz|supernano|marmore|móveis|iluminação|tintas|acabamento|vidro|lojas|store)/i;
+          const isSup = supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle);
               return {
                   handle: d.handle,
                   name: d.name,
