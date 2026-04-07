@@ -284,11 +284,35 @@
 
   /* POST CARDS */
   .post-item {
-    padding: 16px 20px;
+    padding: 14px 16px;
     border-bottom: 1px solid var(--border);
     cursor: pointer; transition: background 0.2s;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: var(--surface);
+    border-radius: 12px;
+    gap: 12px;
   }
+
+  .post-item.compact-mode { flex-direction: row; height: 145px; padding: 12px; }
+  .compact-img-wrap { flex-shrink: 0; }
+  .post-item:not(.compact-mode) .compact-img-wrap { width: 100%; aspect-ratio: 4/5; }
+  .post-item:not(.compact-mode) .compact-img-wrap .post-img { width: 100%; height:100%; max-height:400px; object-fit:cover; border-radius:8px;}
+  .post-item.compact-mode .compact-img-wrap { width: 90px; height: 100%; margin-right: 4px; }
+  .post-item.compact-mode .post-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .compact-content-wrap { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+  .post-item.compact-mode .post-text { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; flex:1; font-size:13px; line-height:1.3em; margin:4px 0; }
+  .post-item:not(.compact-mode) .post-text { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; flex:1; margin-bottom:8px; }
+  .post-item.compact-mode .post-actions { margin-top:0; justify-content:flex-start; }
+  .post-item .read-btn { background:transparent; color:var(--text-muted); border:1px dashed var(--border); }
+  .post-item .read-btn:hover { background:var(--surface2); color:var(--text); }
 
   .post-item:last-child { border-bottom: none; }
   .post-item:hover { background: var(--surface2); }
@@ -350,7 +374,7 @@
   .metric-icon { font-size: 13px; }
 
   .post-actions {
-    display: flex; gap: 8px; margin-top: 12px;
+    display: flex; gap: 8px; margin-top: auto;
   }
 
   .action-btn {

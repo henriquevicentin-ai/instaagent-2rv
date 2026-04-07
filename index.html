@@ -47,7 +47,7 @@
     <div class="nav-item" onclick="showTab('relatorios')">
       <span>📊</span> Relatórios
     </div>
-    <div class="nav-item" onclick="showTab('configuracoes')">
+    <div class="nav-item" id="nav-config-admin" onclick="showTab('configuracoes')" style="display:none;">
       <span>⚙️</span> Configurações
     </div>
   </div>
@@ -85,7 +85,7 @@
     </div>
 
     <div class="topbar-actions">
-      <button class="btn" onclick="backupDashboard()" style="background:#0a9e7f;color:#fff;border-color:#0a9e7f">💾 Backup Seguro</button>
+      <button class="btn" id="btn-backup-admin" onclick="backupDashboard()" style="display:none; background:#0a9e7f;color:#fff;border-color:#0a9e7f">💾 Backup Seguro</button>
       <button class="btn" onclick="triggerNotification()">🔔 Testar Alerta</button>
       <button class="btn primary" onclick="openModal()">＋ Adicionar Perfil</button>
     </div>
@@ -97,12 +97,12 @@
     <div class="stats-grid" style="display:none;">
       <div class="stat-card sup">
         <div class="stat-label">Posts Fornecedores</div>
-        <div class="stat-value sup" id="stat-sup-posts">47</div>
+        <div class="stat-value sup" id="dynamic-forn-count">0</div>
         <div class="stat-change">Esta semana <span>↑ 12</span></div>
       </div>
       <div class="stat-card arq">
         <div class="stat-label">Posts Arquitetos</div>
-        <div class="stat-value arq" id="stat-arq-posts">23</div>
+        <div class="stat-value arq" id="dynamic-arq-count">0</div>
         <div class="stat-change">Esta semana <span>↑ 5</span></div>
       </div>
       <div class="stat-card neutral">
@@ -134,14 +134,18 @@
               <span class="type-badge sup">AGENTE 1</span>
             </div>
             <div class="feed-filters-row" id="filters-fornecedores" style="display:none; margin-left:auto; gap:10px; align-items:center;">
-              <select class="form-input" id="filter-date-f" onchange="renderFeeds()" style="width:160px; font-size:12px; padding:6px 10px;">
+              <select class="form-input" id="filter-date-f" onchange="document.getElementById('custom-date-f').style.display=this.value==='custom'?'flex':'none'; renderFeeds();" style="width:140px; font-size:12px; padding:6px 10px;">
                 <option value="all">Período: Todos</option>
                 <option value="week">Na semana</option>
                 <option value="month">No mês</option>
                 <option value="last_month">No mês passado</option>
-                <option value="6_months">Últimos 6 meses</option>
-                <option value="12_months">Últimos 12 meses</option>
+                <option value="custom">Calendário Aberto</option>
               </select>
+              <div id="custom-date-f" style="display:none; align-items:center; gap:6px;">
+                 <input type="date" id="filter-custom-start-f" onchange="renderFeeds()" class="form-input" style="font-size:12px; padding:4px;">
+                 <span style="color:var(--text-muted); font-size:10px;">até</span>
+                 <input type="date" id="filter-custom-end-f" onchange="renderFeeds()" class="form-input" style="font-size:12px; padding:4px;">
+              </div>
             </div>
             <button class="btn" id="btn-analisar-sup" style="font-size:11px; padding:5px 10px;" onclick="analyzeWithAI('fornecedor')">🤖 Analisar</button>
           </div>
@@ -159,14 +163,18 @@
             <span class="type-badge arq">AGENTE 2</span>
           </div>
           <div class="feed-filters-row" id="filters-arquitetos" style="display:none; margin-left:auto; gap:10px; align-items:center;">
-              <select class="form-input" id="filter-date-a" onchange="renderFeeds()" style="width:160px; font-size:12px; padding:6px 10px;">
+              <select class="form-input" id="filter-date-a" onchange="document.getElementById('custom-date-a').style.display=this.value==='custom'?'flex':'none'; renderFeeds();" style="width:140px; font-size:12px; padding:6px 10px;">
                 <option value="all">Período: Todos</option>
                 <option value="week">Na semana</option>
                 <option value="month">No mês</option>
                 <option value="last_month">No mês passado</option>
-                <option value="6_months">Últimos 6 meses</option>
-                <option value="12_months">Últimos 12 meses</option>
+                <option value="custom">Calendário Aberto</option>
               </select>
+              <div id="custom-date-a" style="display:none; align-items:center; gap:6px;">
+                 <input type="date" id="filter-custom-start-a" onchange="renderFeeds()" class="form-input" style="font-size:12px; padding:4px;">
+                 <span style="color:var(--text-muted); font-size:10px;">até</span>
+                 <input type="date" id="filter-custom-end-a" onchange="renderFeeds()" class="form-input" style="font-size:12px; padding:4px;">
+              </div>
               <select class="form-input" id="filter-seller-a" onchange="renderFeeds()" style="width:160px; font-size:12px; padding:6px 10px;">
                 <option value="all">Vendedor: Todos</option>
               </select>
@@ -345,11 +353,23 @@
         <div class="panel-header"><div class="panel-title">⚙️ Configurações do Sistema</div></div>
         <div class="panel-body" style="padding: 20px;">
           <!-- API GROQ -->
-          <div class="imggen-hfkey-row" id="nb-key-row" style="margin-bottom:15px;">
-            <label style="font-weight:bold; font-size:13px; margin-bottom:6px; display:block;">⚡ Groq API Key</label>
+          <div class="imggen-hfkey-row" id="nb-key-row" style="margin-bottom:15px; display:block;">
+            <label style="font-weight:bold; font-size:13px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+              <span>⚡ Groq API Key</span>
+              <span class="hf-status empty" id="nb-status" style="font-size:11px; font-weight:normal;">Não configurado</span>
+            </label>
             <input type="password" id="nb-token" class="form-input" value="" placeholder="Cole sua chave gsk_... aqui" oninput="updateNbStatus()" style="width:100%; margin-bottom:4px;" />
-            <span class="hf-status empty" id="nb-status">Não configurado</span>
             <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">*A chave do Groq (começa com gsk_) é gratuita e necessária para análise e assistente IA.</div>
+          </div>
+          <hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">
+          <!-- API GOOGLE DRIVE -->
+          <div id="admin-google-container" style="display:none; margin-bottom:15px;">
+            <label style="font-weight:bold; font-size:13px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+              <span>📁 Google API Key (Drive Imagens)</span>
+              <span id="google-status" style="font-size:11px; font-weight:normal; color:var(--text-muted);">Não configurado</span>
+            </label>
+            <input type="password" id="google-token" class="form-input" placeholder="Cole sua Google API Key (Chave do Google) aqui" oninput="updateGoogleStatus()" style="width:100%; margin-bottom:4px;" />
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">*Usada para pesquisar fotos de portfólio no Google Drive do escritório.</div>
           </div>
           <hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">
           <!-- APIFY -->
@@ -3245,7 +3265,11 @@ async function initSupabaseData() {
       new URLSearchParams(window.location.search).get('admin') === '1' ||
       localStorage.getItem('isAdmin') === 'true';
 
-    if (isAdmin) localStorage.setItem('isAdmin', 'true');
+    if (isAdmin) {
+        localStorage.setItem('isAdmin', 'true');
+        document.getElementById('nav-config-admin')?.style.setProperty('display', 'flex');
+        document.getElementById('btn-backup-admin')?.style.setProperty('display', 'block');
+    }
 
     document.getElementById('admin-apify-container')?.style.setProperty('display', isAdmin ? 'block' : 'none');
 
@@ -3335,12 +3359,31 @@ function updateApifyStatus() {
   }
 }
 
+function updateGoogleStatus() {
+  const t = document.getElementById('google-token').value.trim();
+  const st = document.getElementById('google-status');
+  if (t && t.length > 30) {
+    st.textContent = '🟢 Configurado';
+    st.style.color = '#00a854';
+    localStorage.setItem('instaagent_google_token', t);
+  } else {
+    st.textContent = '🔴 Não configurado';
+    st.style.color = 'var(--text-muted)';
+    localStorage.removeItem('instaagent_google_token');
+  }
+}
+
 // Inicializar Token
 document.addEventListener('DOMContentLoaded', () => {
     const savedToken = localStorage.getItem('instaagent_apify_token');
     if (savedToken) {
         document.getElementById('apify-token').value = savedToken;
         updateApifyStatus();
+    }
+    const savedGoogleToken = localStorage.getItem('instaagent_google_token');
+    if (savedGoogleToken && document.getElementById('google-token')) {
+        document.getElementById('google-token').value = savedGoogleToken;
+        updateGoogleStatus();
     }
 });
 
@@ -3988,12 +4031,17 @@ function selectType(type) {
 }
 
 function addProfile() {
-  const handle = document.getElementById('new-handle').value.trim();
+  let handle = document.getElementById('new-handle').value.trim();
   const name = document.getElementById('new-name').value.trim();
   const seller = document.getElementById('new-seller') ? document.getElementById('new-seller').value.trim() : '';
   if (!handle || !name) return;
+  
+  if (!handle.startsWith('@')) handle = '@' + handle;
+  const exists = window.profiles.some(p => (p.handle||'').toLowerCase() === handle.toLowerCase());
+  if (exists) { showToast(selectedType, '⚠️', 'Erro', 'Este perfil já está cadastrado!'); return; }
+
   window.profiles.push({
-    name, handle: handle.startsWith('@') ? handle : '@' + handle,
+    name, handle: handle,
     avatar: name.substring(0, 2).toUpperCase(), type: selectedType, active: true, seller: selectedType === 'arq' ? seller : null
   }); 
   saveProfiles();
@@ -4518,7 +4566,6 @@ function loadPlanilha(event) {
 }
 
 // ── Google Custom Search (fotos dos produtos) ────────────────────────────────
-const GOOGLE_API_KEY  = 'AIzaSyDF_PR7Y3ToounUIaIBGEihFx-ylALKSeQ';
 const GOOGLE_CX       = '90b0de553f9934413';
 const DRIVE_FOLDER_ID = '1u5CYS0TE4HRH3HOoY22tyWDfn9K5qRdA';
 
@@ -4535,8 +4582,10 @@ const BRAND_IMAGE_PATTERNS = {
 // Busca arquivos no Google Drive pelo nome do produto
 async function searchDrive(query) {
   try {
+    const googleToken = localStorage.getItem('instaagent_google_token');
+    if (!googleToken) return [];
     const q   = encodeURIComponent(`'${DRIVE_FOLDER_ID}' in parents and fullText contains '${query}' and trashed = false`);
-    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,thumbnailLink,webContentLink)&key=${GOOGLE_API_KEY}&pageSize=5`;
+    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,thumbnailLink,webContentLink)&key=${googleToken}&pageSize=5`;
     const res  = await fetch(url);
     const data = await res.json();
     return data.files || [];
@@ -4564,35 +4613,77 @@ function selectProductCard(idx, product) {
 
 function renderFornecedoresReal() {
     const container = document.getElementById('feed-fornecedores');
-    let posts = window.fornecedoresPosts;
+    let posts = window.fornecedoresPosts || [];
+    let readPosts = JSON.parse(localStorage.getItem('instaagent_read_posts') || '[]');
     
+    // Hide read posts
+    posts = posts.filter(p => !readPosts.includes(p.id));
+
+    // update stat dynamically from FULL array
+    const dynamicCount = document.getElementById('dynamic-forn-count');
+    if (dynamicCount) dynamicCount.innerText = posts.length;
+    
+    let isCompact = false;
     if (window.currentTab === 'dashboard') {
-        // Sort by likes descending and take top 6
-        posts = [...posts].sort((a,b) => b.likes - a.likes).slice(0, 6);
+        const sorted = [...posts].sort((a,b) => (b.likes||0) - (a.likes||0));
+        posts = sorted.slice(0, 6);
+        isCompact = true;
+        if(container) container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    } else {
+        if(container) container.style.gridTemplateColumns = 'repeat(5, 1fr)';
+        const dateFilter = document.getElementById('filter-date-f')?.value || 'all';
+        if (dateFilter === 'custom') {
+            const start = document.getElementById('filter-custom-start-f')?.value;
+            const end = document.getElementById('filter-custom-end-f')?.value;
+            if(start) {
+               const stTime = new Date(start).getTime();
+               posts = posts.filter(p => new Date(p.time).getTime() >= stTime);
+            }
+            if(end) {
+               // set end boundary to end of day
+               const edTime = new Date(end).getTime() + 86399999;
+               posts = posts.filter(p => new Date(p.time).getTime() <= edTime);
+            }
+        } else if (dateFilter !== 'all') {
+            const now = Date.now();
+            const ranges = { week: 7, month: 30, last_month: 60, '6_months': 180, '12_months': 365 };
+            const days = ranges[dateFilter] || 9999;
+            posts = posts.filter(p => (now - new Date(p.time).getTime()) < days * 86400000);
+        }
     }
     
+
+    
     container.innerHTML = posts.map(p => {
-        const imgHtml = p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:100%; border-radius:8px; margin-bottom:12px; object-fit:cover; max-height:400px;" onerror="this.style.display=\'none\'" />' : '';
-        const safeText = p.text.replace(/\n|\r/g, ' ').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        const compactClass = isCompact ? ' compact-mode' : '';
+        const imgHtml = p.imageUrl ? '<img class="post-img" src="' + p.imageUrl + '" onerror="this.style.display=\\'none\\'"/>' : '';
+        const safeText = (p.text||"").replace(/\n|\r/g, ' ').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        const profile = (window.profiles || []).find(x => (x.handle||'').toLowerCase() === (p.handle||'').toLowerCase());
+        const followersTag = profile?.followers ? '<span style="font-size:10px; color:var(--text-muted); margin-left:6px;">👥 ' + Number(profile.followers).toLocaleString('pt-BR') + '</span>' : '';
         
-        return '<div class="post-item ' + (p.isNew ? 'new' : '') + '">' +
-            '<div class="post-profile">' +
-            '<div class="avatar sup">' + p.user.charAt(0).toUpperCase() + '</div>' +
-            '<div class="post-meta">' +
-            '<div class="post-user">' + p.user + '</div>' +
-            '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString() + '</div>' +
-            '</div>' +
-            '</div>' + imgHtml +
-            '<div class="post-text">' + p.text + '</div>' +
-            '<div class="post-metrics">' +
-            '<div class="metric">❤️ ' + p.likes.toLocaleString("pt-BR") + '</div>' +
-            '<div class="metric">💬 ' + p.comments + '</div>' +
-            '</div>' +
-            '<div class="post-actions">' +
-            '<button class="action-btn" onclick="copyPost(\'' + p.user + '\')">📋 Copiar Legenda</button>' +
-            '<button class="action-btn cta" onclick="adaptPost(\'' + p.user + '\', \'' + safeText + '\')">✨ Analisar Produto</button>' +
-            '</div></div>';
-    }).join('');
+        return '<div class="post-item ' + (p.isNew ? 'new' : '') + compactClass + '" onclick="goToPost(\\'' + (p.url || 'https://instagram.com/' + (p.handle||'').replace('@','')) + '\\', event)">' +
+            '<div class="compact-img-wrap">' + imgHtml + '</div>' + 
+            '<div class="compact-content-wrap">' +
+                '<div class="post-profile">' +
+                    '<div class="avatar sup">' + (p.user||'?').charAt(0).toUpperCase() + '</div>' +
+                    '<div class="post-meta">' +
+                        '<div class="post-user">' + (p.user||p.handle) + followersTag + '</div>' +
+                        '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString() + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="post-text">' + p.text + '</div>' +
+                '<div class="post-metrics">' +
+                    '<div class="metric"><i class="ph-fill ph-heart"></i> ' + (p.likes||0).toLocaleString("pt-BR") + '</div>' +
+                    '<div class="metric"><i class="ph-fill ph-chat-circle"></i> ' + (p.comments||0) + '</div>' +
+                '</div>' +
+                '<div class="post-actions">' +
+                    '<button class="action-btn" onclick="copyCaption(\\'' + safeText + '\\', event)">📋 Copiar</button>' +
+                    '<button class="action-btn cta" onclick="adaptPost(\\'' + p.user + '\\', \\'' + safeText + '\\', event)">✨ Analisar</button>' +
+                    '<button class="action-btn read-btn" onclick="markAsRead(\\'' + p.id + '\\', event)">Marcar Lido</button>' +
+                '</div>' +
+            '</div>' + 
+        '</div>';
+    }).join('') || '<div style="padding:40px; text-align:center; color:var(--text-muted); grid-column:1/-1;">Nenhum post encontrado.</div>';
 }
 
 function populateSellerFilter() {
@@ -4619,13 +4710,38 @@ function setArqSort(mode, btn) {
 function renderArquitetosReal() {
     const container = document.getElementById('feed-arquitetos');
     let posts = window.arquitetosPosts || [];
+    let readPosts = JSON.parse(localStorage.getItem('instaagent_read_posts') || '[]');
+    
+    // Hide read posts
+    posts = posts.filter(p => !readPosts.includes(p.id));
 
+    // update stat dynamically from FULL array
+    const dynamicCount = document.getElementById('dynamic-arq-count');
+    if (dynamicCount) dynamicCount.innerText = posts.length;
+    
+    let isCompact = false;
     if (window.currentTab === 'dashboard') {
-        posts = [...posts].sort((a,b) => b.likes - a.likes).slice(0, 6);
+        const sorted = [...posts].sort((a,b) => (b.likes||0) - (a.likes||0));
+        posts = sorted.slice(0, 6);
+        isCompact = true;
+        if(container) container.style.gridTemplateColumns = 'repeat(2, 1fr)';
     } else {
+        if(container) container.style.gridTemplateColumns = 'repeat(5, 1fr)';
+        
         // Filtro de data
         const dateFilter = document.getElementById('filter-date-a')?.value || 'all';
-        if (dateFilter !== 'all') {
+        if (dateFilter === 'custom') {
+            const start = document.getElementById('filter-custom-start-a')?.value;
+            const end = document.getElementById('filter-custom-end-a')?.value;
+            if(start) {
+               const stTime = new Date(start).getTime();
+               posts = posts.filter(p => new Date(p.time).getTime() >= stTime);
+            }
+            if(end) {
+               const edTime = new Date(end).getTime() + 86399999;
+               posts = posts.filter(p => new Date(p.time).getTime() <= edTime);
+            }
+        } else if (dateFilter !== 'all') {
             const now = Date.now();
             const ranges = { week: 7, month: 30, last_month: 60, '6_months': 180, '12_months': 365 };
             const days = ranges[dateFilter] || 9999;
@@ -4654,21 +4770,11 @@ function renderArquitetosReal() {
         // Ordenação
         posts = [...posts];
         switch(arqSortMode) {
-            case 'recente':
-                posts.sort((a,b) => new Date(b.time) - new Date(a.time));
-                break;
-            case 'likes':
-                posts.sort((a,b) => (b.likes||0) - (a.likes||0));
-                break;
-            case 'comentarios':
-                posts.sort((a,b) => (b.comments||0) - (a.comments||0));
-                break;
-            case 'engajamento':
-                posts.sort((a,b) => ((b.likes||0) + (b.comments||0)*2) - ((a.likes||0) + (a.comments||0)*2));
-                break;
-            case 'nome':
-                posts.sort((a,b) => (a.user||'').localeCompare(b.user||'', 'pt-BR'));
-                break;
+            case 'recente': posts.sort((a,b) => new Date(b.time) - new Date(a.time)); break;
+            case 'likes': posts.sort((a,b) => (b.likes||0) - (a.likes||0)); break;
+            case 'comentarios': posts.sort((a,b) => (b.comments||0) - (a.comments||0)); break;
+            case 'engajamento': posts.sort((a,b) => ((b.likes||0) + (b.comments||0)*2) - ((a.likes||0) + (a.comments||0)*2)); break;
+            case 'nome': posts.sort((a,b) => (a.user||'').localeCompare(b.user||'', 'pt-BR')); break;
             case 'seguidores':
                 posts.sort((a,b) => {
                     const pA = (window.profiles||[]).find(x => x.handle === a.handle);
@@ -4679,34 +4785,60 @@ function renderArquitetosReal() {
         }
     }
 
+
+
     container.innerHTML = posts.map(p => {
-        const imgHtml = p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:100%; border-radius:8px; margin-bottom:12px; object-fit:cover; max-height:400px;" onerror="this.style.display=\'none\'" />' : '';
-        const safeText = p.text.replace(/\n|\r/g, ' ').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        const compactClass = isCompact ? ' compact-mode' : '';
+        const imgHtml = p.imageUrl ? '<img class="post-img" src="' + p.imageUrl + '" onerror="this.style.display=\\'none\\'"/>' : '';
+        const safeText = (p.text||"").replace(/\n|\r/g, ' ').replace(/"/g, '&quot;').replace(/'/g, "\\'");
         const profile = (window.profiles || []).find(x => x.handle === p.handle);
         const sellerTag = profile?.seller ? '<span style="font-size:10px; background:var(--accent-arq-dim); color:var(--accent-arq); border-radius:4px; padding:2px 7px; margin-left:6px;">👤 ' + profile.seller + '</span>' : '';
         const followersTag = profile?.followers ? '<span style="font-size:10px; color:var(--text-muted); margin-left:6px;">👥 ' + Number(profile.followers).toLocaleString('pt-BR') + '</span>' : '';
         const engajamento = (p.likes||0) + (p.comments||0)*2;
 
-        return '<div class="post-item ' + (p.isNew ? 'new arq' : '') + '">' +
-            '<div class="post-profile">' +
-            '<div class="avatar arq">' + (p.user||'?').charAt(0).toUpperCase() + '</div>' +
-            '<div class="post-meta">' +
-            '<div class="post-user">' + (p.user||p.handle) + sellerTag + followersTag + '</div>' +
-            '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString('pt-BR') + '</div>' +
+        return '<div class="post-item ' + (p.isNew ? 'new arq' : '') + compactClass + '" onclick="goToPost(\\'' + (p.url || 'https://instagram.com/' + (p.handle||'').replace('@','')) + '\\', event)">' +
+            '<div class="compact-img-wrap">' + imgHtml + '</div>' + 
+            '<div class="compact-content-wrap">' +
+                '<div class="post-profile">' +
+                    '<div class="avatar arq">' + (p.user||'?').charAt(0).toUpperCase() + '</div>' +
+                    '<div class="post-meta">' +
+                        '<div class="post-user">' + (p.user||p.handle) + sellerTag + followersTag + '</div>' +
+                        '<div class="post-time">' + p.handle + ' &middot; ' + new Date(p.time).toLocaleDateString('pt-BR') + '</div>' +
+                    '</div>' +
+                '</div>' + 
+                '<div class="post-text">' + p.text + '</div>' +
+                '<div class="post-metrics">' +
+                    '<div class="metric"><i class="ph-fill ph-heart"></i> ' + (p.likes||0).toLocaleString("pt-BR") + '</div>' +
+                    '<div class="metric"><i class="ph-fill ph-chat-circle"></i> ' + (p.comments||0) + '</div>' +
+                    '<div class="metric" style="margin-left:auto; font-size:10px; color:var(--accent-arq);">🔥 ' + engajamento.toLocaleString('pt-BR') + '</div>' +
+                '</div>' +
+                '<div class="post-actions">' +
+                    '<button class="action-btn" style="color:var(--accent-arq); background:var(--accent-arq-dim);" onclick="draftDirect(\\'' + p.handle + '\\', \\'' + safeText + '\\', event)">💬 Direct</button>' +
+                    '<button class="action-btn read-btn" onclick="markAsRead(\\'' + p.id + '\\', event)">Marcar Lido</button>' +
+                '</div>' +
             '</div>' +
-            '</div>' + imgHtml +
-            '<div class="post-text">' + p.text + '</div>' +
-            '<div class="post-metrics">' +
-            '<div class="metric">❤️ ' + (p.likes||0).toLocaleString("pt-BR") + '</div>' +
-            '<div class="metric">💬 ' + (p.comments||0) + '</div>' +
-            '<div class="metric" style="margin-left:auto; font-size:10px; color:var(--accent-arq);">🔥 ' + engajamento.toLocaleString('pt-BR') + '</div>' +
-            '</div>' +
-            '<div class="post-actions">' +
-            '<button class="action-btn" style="color:var(--accent-arq); background:var(--accent-arq-dim);" onclick="draftDirect(\'' + p.handle + '\', \'' + safeText + '\')">💬 Abordar no Direct</button>' +
-            '<button class="action-btn" onclick="window.open(\'' + (p.url || 'https://instagram.com/' + p.handle) + '\', \'_blank\')">🔗 Ver no Insta</button>' +
-            '</div></div>';
-    }).join('') || '<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:13px;">Nenhum post encontrado para este filtro.</div>';
+        '</div>';
+    }).join('') || '<div style="padding:40px; text-align:center; color:var(--text-muted); grid-column:1/-1;">Nenhum post encontrado.</div>';
 }
+
+window.backupDashboard = function() {
+    const data = {
+        profiles: JSON.parse(localStorage.getItem('instaagent_profiles') || '[]'),
+        apifyToken: localStorage.getItem('instaagent_apify_token') || '',
+        readPosts: JSON.parse(localStorage.getItem('instaagent_read_posts') || '[]'),
+        customSups: JSON.parse(localStorage.getItem('instaagent_custom_sups') || '[]'),
+        hfToken: localStorage.getItem('instaagent_hf_token') || '',
+        syncDate: localStorage.getItem('instaagent_last_sync') || ''
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'instaagent_backup_' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    if(window.showToast) window.showToast('sup', '💾', 'Backup concluído', 'O arquivo JSON foi salvo no seu computador.');
+};
 </script>
 
 <!-- Modal Add Profile -->
