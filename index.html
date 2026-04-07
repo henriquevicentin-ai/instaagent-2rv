@@ -13,7 +13,7 @@
 <!-- SIDEBAR -->
 <nav class="sidebar">
   <div class="logo" style="padding: 24px 24px 16px; text-align: center;">
-    <img src="LOGO 2RV.png" alt="2RV Revestimentos & Ambientes" style="max-width: 150px; height: auto; display: block; margin: 0 auto;" />
+    <img src="logo-2rv.png" alt="2RV Revestimentos & Ambientes" style="max-width: 150px; height: auto; display: block; margin: 0 auto;" />
     <div class="logo-sub" style="margin-top: 12px; font-size: 10px; text-align: center;">Monitor de Perfis com IA</div>
     <div style="margin-top: 6px; font-size: 9px; color: var(--border); font-family: 'DM Sans', monospace; letter-spacing: 0.3px;">v1.0 · 06/04/2025 09:04</div>
   </div>
@@ -3203,6 +3203,7 @@ async function initSupabaseData() {
         avatar: d.avatar,
         active: d.active,
         seller: d.seller,
+        followers: d.followers_count,
         type: (supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle))
           ? 'sup'
           : 'arq'
