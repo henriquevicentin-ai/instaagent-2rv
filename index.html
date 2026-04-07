@@ -3163,96 +3163,118 @@ let profiles = [];
 window.profiles = profiles;
 
 async function initSupabaseData() {
+  // 1. Fallback sem Supabase
   if (typeof supabase === 'undefined') {
-    // fallback
-    profiles = JSON.parse(localStorage.getItem('instaagent_profiles')) || defaultProfiles;
-    window.profiles = profiles;
+    window.profiles = JSON.parse(localStorage.getItem('instaagent_profiles') ?? 'null') ?? defaultProfiles;
+    profiles = window.profiles;
     return;
   }
 
+  // 2. Inicializa cliente
   window.supabaseClient = supabase.createClient(
     'https://vzbbdgpjpteowpnklxly.supabase.co',
     'sb_publishable_NEznO1iLBT1YSqEkw6-yKw_fUs7g7RH'
   );
 
+  // 3. Spinner de loading
   const spinner = document.createElement('div');
   spinner.id = 'supa-loading';
   spinner.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:999999;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:"Syne"';
   spinner.innerHTML = '<div style="width:40px;height:40px;border:4px solid var(--accent-sup);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite"></div><h3 style="margin-top:20px;color:var(--text);font-weight:600">Sincronizando Mídia Base (Cloud)...</h3><style>@keyframes spin{100%{transform:rotate(360deg)}}</style>';
   document.body.appendChild(spinner);
 
+  const supRegex = /(revestimento|portinari|ceusa|elianerevestimentos|portobello|duratex|deca|tramontina|docol|biancogres|castelatto|ceramicaportinari|tarkett|eucafloor|guararapes|arauco|sudati|berneck|masisa|fibraplac|florplac|mdf|porcelanato|ceramica|acabamentos|marmoraria|granito|pedra|quartz|supernano|marmore|móveis|iluminação|tintas|acabamento|vidro|lojas|store)/i;
+
   try {
-      const { data, error } = await window.supabaseClient.from('profiles').select('*').order('created_at', { ascending: true });
-      if (error) throw error;
-      if (data && data.length > 0) {
-          const extraSups = JSON.parse(localStorage.getItem('instaagent_custom_sups') || '[]');
-          window.profiles = data.map(d => {
-          const supRegex = /(revestimento|portinari|ceusa|elianerevestimentos|portobello|duratex|deca|tramontina|docol|biancogres|castelatto|ceramicaportinari|tarkett|eucafloor|guararapes|arauco|sudati|berneck|masisa|fibraplac|florplac|mdf|porcelanato|ceramica|acabamentos|marmoraria|granito|pedra|quartz|supernano|marmore|móveis|iluminação|tintas|acabamento|vidro|lojas|store)/i;
-          const isSup = supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle);
-              return {
-                  handle: d.handle,
-                  name: d.name,
-                  avatar: d.avatar,
-                  active: d.active,
-                  type: isSup ? "sup" : "arq",
-                  seller: d.seller
-              };
-          });
-          profiles = window.profiles;
-          
-          // Guardar backup local
-          localStorage.setItem('instaagent_profiles', JSON.stringify(profiles));
-      }
+    // 4. Carrega perfis
+    const { data: profilesData, error: profilesErr } = await window.supabaseClient
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: true });
 
-      
-      // Load extracted posts from Supabase database
-      const { data: postsData, error: postsErr } = await window.supabaseClient.from('extracted_posts').select('*').order('time', { ascending: false });
-      if (!postsErr && postsData) {
-          // Sync with local format
-          let allPosts = postsData.map(p => ({
-              ...p,
-              isNew: false
-          }));
-          localStorage.setItem('instaagent_posts', JSON.stringify(allPosts));
-      }
-      
-      // Load last sync log
-      const { data: logData } = await window.supabaseClient.from('agente_insta_sync_logs').select('*').order('executed_at', { ascending: false }).limit(1);
-      if (logData && logData.length > 0) {
-          const lastLog = logData[0];
-          const syncLabel = document.getElementById('label-sync');
-          if (syncLabel) {
-              const d = new Date(lastLog.executed_at);
-              const formatted = d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth()+1).toString().padStart(2, '0') + '/' + d.getFullYear() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
-              syncLabel.textContent = 'Sync: ' + formatted;
-          }
-      }
+    if (profilesErr) throw profilesErr;
 
-      // Check admin status and UI
-      const isAdmin = new URLSearchParams(window.location.search).get('admin') === '1' || localStorage.getItem('isAdmin') === 'true';
-      if (isAdmin) localStorage.setItem('isAdmin', 'true'); // persist if it came from URL
-      
-      const adminSection = document.getElementById('admin-apify-container');
-      if (adminSection) {
-          adminSection.style.display = isAdmin ? 'block' : 'none';
-      }
+    if (profilesData?.length > 0) {
+      const extraSups = JSON.parse(localStorage.getItem('instaagent_custom_sups') ?? '[]');
 
-      // Re-render
-      if (typeof loadFeedsFromStorage === 'function') loadFeedsFromStorage();
-      if (typeof renderArquitetos === 'function') renderArquitetos();
-      if (typeof renderFornecedores === 'function') renderFornecedores();
-      if (typeof renderProfiles === 'function') renderProfiles();
-      if (typeof window.renderFeeds === 'function') window.renderFeeds();
-      if (typeof showTab === 'function') showTab(window.currentTab || 'dashboard');
-      if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
-      
-  } catch(err) {
-      console.error("Supabase Error:", err);
-      profiles = JSON.parse(localStorage.getItem('instaagent_profiles')) || defaultProfiles;
-      window.profiles = profiles;
+      window.profiles = profilesData.map(d => ({
+        handle: d.handle,
+        name: d.name,
+        avatar: d.avatar,
+        active: d.active,
+        seller: d.seller,
+        type: (supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle))
+          ? 'sup'
+          : 'arq'
+      }));
+
+      profiles = window.profiles;
+      localStorage.setItem('instaagent_profiles', JSON.stringify(profiles));
+    }
+
+    // 5. Carrega posts
+    const { data: postsData, error: postsErr } = await window.supabaseClient
+      .from('extracted_posts')
+      .select('*')
+      .order('time', { ascending: false });
+
+    if (!postsErr && postsData) {
+      localStorage.setItem('instaagent_posts', JSON.stringify(
+        postsData.map(p => ({ ...p, isNew: false }))
+      ));
+    }
+
+    // 6. Atualiza label de sync
+    const { data: logData } = await window.supabaseClient
+      .from('agente_insta_sync_logs')
+      .select('*')
+      .order('executed_at', { ascending: false })
+      .limit(1);
+
+    const syncLabel = document.getElementById('label-sync');
+    if (syncLabel && logData?.length > 0) {
+      const d = new Date(logData[0].executed_at);
+      const pad = n => String(n).padStart(2, '0');
+      syncLabel.textContent = `Sync: ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    // 7. Admin check
+    const isAdmin =
+      new URLSearchParams(window.location.search).get('admin') === '1' ||
+      localStorage.getItem('isAdmin') === 'true';
+
+    if (isAdmin) localStorage.setItem('isAdmin', 'true');
+
+    document.getElementById('admin-apify-container')?.style.setProperty('display', isAdmin ? 'block' : 'none');
+
+    // 8. Re-renders com proteção individual por try/catch
+    const renders = [
+      ['loadFeedsFromStorage', () => loadFeedsFromStorage()],
+      ['renderArquitetos',     () => renderArquitetos()],
+      ['renderFornecedores',   () => renderFornecedores()],
+      ['renderProfiles',       () => renderProfiles()],
+      ['renderFeeds',          () => window.renderFeeds()],
+      ['showTab',              () => showTab(window.currentTab || 'dashboard')],
+      ['updateSidebarBadges',  () => updateSidebarBadges()],
+    ];
+
+    for (const [name, fn] of renders) {
+      try {
+        if (typeof fn === 'function' || typeof window[name] === 'function') fn();
+      } catch (renderErr) {
+        console.warn(`[initSupabaseData] Erro ao chamar ${name}:`, renderErr);
+      }
+    }
+
+  } catch (err) {
+    console.error('[initSupabaseData] Supabase error:', err);
+    window.profiles = JSON.parse(localStorage.getItem('instaagent_profiles') ?? 'null') ?? defaultProfiles;
+    profiles = window.profiles;
+
+  } finally {
+    // 9. Remove spinner sempre, mesmo em caso de erro
+    document.getElementById('supa-loading')?.remove();
   }
-  
-  if(document.getElementById('supa-loading')) document.getElementById('supa-loading').remove();
 }
 
 // Intercept saveProfiles to save to DB as well
