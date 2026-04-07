@@ -4068,6 +4068,8 @@ function showTab(tab) {
         const bArq = document.getElementById('btn-analisar-arq');
         if(bSup) bSup.style.display = 'none';
         if(bArq) bArq.style.display = 'none';
+        const sortBar = document.getElementById('arq-sort-bar');
+        if(sortBar) sortBar.style.display = 'none';
     } else if (tab === 'fornecedores') {
         if(twoCol) {
             twoCol.style.display = 'grid';
