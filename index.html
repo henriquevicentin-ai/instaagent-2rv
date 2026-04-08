@@ -3344,6 +3344,16 @@ function updateSidebarBadges() {
     
     if (badgeArq) badgeArq.textContent = arqCount;
     if (badgeSup) badgeSup.textContent = supCount;
+
+    const statProf = document.getElementById('stat-profiles');
+    const statProfSub = document.getElementById('stat-profiles-sub');
+    if (statProf) statProf.innerText = window.profiles.length;
+    if (statProfSub) statProfSub.innerText = supCount + ' fornec. + ' + arqCount + ' arq.';
+
+    const savedPosts = JSON.parse(localStorage.getItem('instaagent_posts')) || [];
+    const newPosts = savedPosts.filter(p => p.isNew).length;
+    const statAlerts = document.getElementById('stat-alerts');
+    if (statAlerts) statAlerts.innerText = newPosts;
 }
 
 // --- APIFY SYNC LOGIC ---
