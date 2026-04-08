@@ -3210,7 +3210,7 @@ async function initSupabaseData() {
   try {
     // 4. Carrega perfis
     const { data: profilesData, error: profilesErr } = await window.supabaseClient
-      .from('profiles')
+      .from('instaagent_profiles')
       .select('*')
       .order('created_at', { ascending: true });
 
@@ -3237,7 +3237,7 @@ async function initSupabaseData() {
 
     // 5. Carrega posts
     const { data: postsData, error: postsErr } = await window.supabaseClient
-      .from('extracted_posts')
+      .from('instaagent_posts')
       .select('*')
       .order('time', { ascending: false });
 
@@ -3320,7 +3320,7 @@ window.saveProfiles = async function() {
         }));
         
         try {
-            await window.supabaseClient.from('profiles').upsert(toUpdate, { onConflict: 'handle' });
+            await window.supabaseClient.from('instaagent_profiles').upsert(toUpdate, { onConflict: 'handle' });
             console.log("Supabase UPSERT SUCCESS");
         if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
         } catch(e) { console.error("UPSERT Error:", e); }
@@ -3699,7 +3699,7 @@ function deleteProfile(handle) {
     
     // Explicit Delete from Cloud DB
     if (window.supabaseClient) {
-        window.supabaseClient.from('profiles').delete().eq('handle', handle).then(({error}) => {
+        window.supabaseClient.from('instaagent_profiles').delete().eq('handle', handle).then(({error}) => {
             if(error) console.error("Cloud Delete Erro:", error);
         });
     }
