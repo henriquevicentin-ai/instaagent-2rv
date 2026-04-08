@@ -3233,6 +3233,12 @@ async function initSupabaseData() {
 
       profiles = window.profiles;
       localStorage.setItem('instaagent_profiles', JSON.stringify(profiles));
+    } else {
+      let localProfiles = JSON.parse(localStorage.getItem('instaagent_profiles') || '[]');
+      if (localProfiles.length === 0) localProfiles = defaultProfiles;
+      window.profiles = localProfiles;
+      profiles = window.profiles;
+      if (typeof window.saveProfiles === 'function') setTimeout(() => window.saveProfiles(), 1000);
     }
 
     // 5. Carrega posts
