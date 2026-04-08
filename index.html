@@ -3255,16 +3255,13 @@ async function initSupabaseData() {
 
     // 6. Atualiza label de sync
     const { data: logData } = await window.supabaseClient
-      .from('agente_insta_sync_logs')
-      .select('*')
-      .order('executed_at', { ascending: false })
-      .limit(1);
+      .from('instaagent_config')
+      .select('config_value')
+      .eq('config_key', 'last_sync_date');
 
     const syncLabel = document.getElementById('label-sync');
-    if (syncLabel && logData?.length > 0) {
-      const d = new Date(logData[0].executed_at);
-      const pad = n => String(n).padStart(2, '0');
-      syncLabel.textContent = `Sync: ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    if (syncLabel && logData?.length > 0 && logData[0].config_value) {
+      syncLabel.textContent = `Sync: ${logData[0].config_value}`;
     }
 
     // 7. Admin check
