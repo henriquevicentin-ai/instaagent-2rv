@@ -108,13 +108,13 @@
       </div>
       <div class="stat-card neutral">
         <div class="stat-label">Alertas Gerados</div>
-        <div class="stat-value" style="color:#5b5bf0">8</div>
+        <div class="stat-value" style="color:#5b5bf0" id="stat-alerts">0</div>
         <div class="stat-change">Hoje <span>↑ 3</span></div>
       </div>
       <div class="stat-card neutral">
         <div class="stat-label">Perfis Monitorados</div>
         <div class="stat-value" style="color:#9b5bf0" id="stat-profiles">11</div>
-        <div class="stat-change">5 fornec. + 6 arq.</div>
+        <div class="stat-change" id="stat-profiles-sub">0 fornec. + 0 arq.</div>
       </div>
       <div class="stat-card" onclick="showTab('imggen')" style="cursor:pointer; border-color:rgba(217,90,43,0.3); background:linear-gradient(135deg,rgba(217,90,43,0.06),transparent);">
         <div class="stat-label" style="color:var(--accent-sup);">🎨 Gerador de Imagens</div>
@@ -3226,9 +3226,7 @@ async function initSupabaseData() {
         active: d.active,
         seller: d.seller,
         followers: d.followers_count,
-        type: (supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle))
-          ? 'sup'
-          : 'arq'
+        type: d.type || (supRegex.test(d.handle) || supRegex.test(d.name) || extraSups.includes(d.handle) ? 'sup' : 'arq')
       }));
 
       profiles = window.profiles;
